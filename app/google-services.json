@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "479049959421",
+    "project_id": "onlinestore-f545b",
+    "storage_bucket": "onlinestore-f545b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:479049959421:android:bdc4ce372e64255c4afb94",
+        "android_client_info": {
+          "package_name": "com.mwende.onlinestore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAzx73qymX1HarhiA-0wVqv2yBLwBv1us"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
