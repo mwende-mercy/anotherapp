@@ -1,36 +1,45 @@
 package com.mwende.onlinestore.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.FirebaseFirestore
-import com.mwende.onlinestore.data.Product
-//import com.mwende.onlinestore.model.Product
+import androidx.lifecycle.viewModelScope
+import com.mwende.onlinestore.model.CartItem
+import com.mwende.onlinestore.model.Product
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class ProductViewModel : ViewModel() {
+    // Sample products
+    private val _products = listOf(
+        Product(1, "Smartphone", 599.99, "https://via.placeholder.com/150"),
+        Product(2, "Laptop", 1299.99, "https://via.placeholder.com/150"),
+        Product(3, "Headphones", 199.99, "https://via.placeholder.com/150")
+    )
+    val products: List<Product> = _products
 
-    private val db = FirebaseFirestore.getInstance()
-    private val _products = MutableStateFlow<List<Product>>(emptyList())
-    val products: StateFlow<List<Product>> = _products
+    // Cart state
+    private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
+    val cartItems: StateFlow<List<CartItem>> = _cartItems
 
-    init {
-        loadProducts()
-    }
+    fun addToCart(product: Product) {
+        viewModelScope.launch {
+            val currentCart = _cartItems.value.toMutableList()
+            val existingItem = currentCart.find { it.product.id == product.id }
 
-    private fun loadProducts() {
-        db.collection("products")
-            .addSnapshotListener { snapshot, _ ->
-                if (snapshot != null) {
-                    val productList = snapshot.documents.mapNotNull { it.toObject(Product::class.java) }
-                    _products.value = productList
-                }
+            existingItem?.let {
+                it.quantity++
+            } ?: run {
+                currentCart.add(CartItem(product))
             }
+            _cartItems.value = currentCart
+        }
     }
 
-    fun addProduct(product: Product, onResult: (Boolean, String?) -> Unit) {
-        db.collection("products")
-            .add(product)
-            .addOnSuccessListener { onResult(true, null) }
-            .addOnFailureListener { e -> onResult(false, e.message) }
+    fun removeFromCart(product: Product) {
+        viewModelScope.launch {
+            val currentCart = _cartItems.value.toMutableList()
+            currentCart.removeAll { it.product.id == product.id }
+            _cartItems.value = currentCart
+        }
     }
 }
