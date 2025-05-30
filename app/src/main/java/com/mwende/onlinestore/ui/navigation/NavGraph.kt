@@ -1,34 +1,42 @@
 // com.mwende.onlinestore.ui.navigation/NavGraph.kt
 package com.mwende.onlinestore.ui.navigation
 
+import android.app.Application
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.mwende.onlinestore.model.AuthState
 import com.mwende.onlinestore.ui.screens.CartScreen
 import com.mwende.onlinestore.ui.screens.HomeScreen
 import com.mwende.onlinestore.ui.screens.LoginScreen
 import com.mwende.onlinestore.ui.screens.RegisterScreen
 import com.mwende.onlinestore.viewmodel.AuthViewModel
+import com.mwende.onlinestore.viewmodel.AuthViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mwende.onlinestore.model.AuthState
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = viewModel()
+    val context = LocalContext.current
+    val authViewModel: AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(context.applicationContext as Application)
+    )
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
 
-    // Automatically navigate based on auth state
+    // Handle auth state changes
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Authenticated -> {
-                if (navController.currentDestination?.route !in listOf("home", "cart")) {
+                if (navController.currentDestination?.route != "home") {
                     navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             }
@@ -45,7 +53,7 @@ fun AppNavHost() {
 
     NavHost(
         navController = navController,
-        startDestination = "login" // Default to login, will auto-redirect if authenticated
+        startDestination = "login"
     ) {
         composable("login") {
             LoginScreen(
@@ -53,26 +61,23 @@ fun AppNavHost() {
                 onNavigateToStore = { navController.navigate("home") }
             )
         }
-
         composable("register") {
             RegisterScreen(
                 navController = navController,
                 onNavigateToStore = { navController.navigate("home") }
             )
         }
-
         composable("home") {
             HomeScreen(
                 navController = navController,
-                onLogout = { authViewModel.signOut() }
+                onLogout = {
+                    authViewModel.signOut()
+                    navController.navigate("login") { popUpTo(0) }
+                }
             )
         }
-
         composable("cart") {
-            CartScreen(
-                navController = navController,
-                onBackClick = { navController.popBackStack() }
-            )
+            CartScreen(navController = navController)
         }
     }
 }
